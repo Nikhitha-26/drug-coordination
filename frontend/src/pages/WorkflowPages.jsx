@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { EmptyState, SectionHeading } from '../components/ui'
 
 const KEY = 'medisync-refill-network'

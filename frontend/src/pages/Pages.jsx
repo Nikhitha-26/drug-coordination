@@ -35,7 +35,7 @@ export function Schedule() {
   return <div className="space-y-5">
     <SectionHeading title="Dose schedule" subtitle="Mark the event after following the prescribed instructions."/>
     <div className="card">
-      <div className="mb-4 rounded-xl bg-sky-50 p-4 text-sm leading-6 text-sky-900">Only record what happened. MediSync does not advise changing, skipping or doubling a dose.</div>
+      <div className="mb-4 rounded-xl bg-sky-50 p-4 text-sm leading-6 text-sky-900">Only record what happened. MediLink does not advise changing, skipping or doubling a dose.</div>
       {patient.doses.length === 0 && <EmptyState title="No doses scheduled" detail="Active prescriptions will appear here."/>}
       {patient.doses.map(d => <div key={d.id} className="flex flex-wrap items-center gap-4 border-t border-slate-100 py-4 first:border-0">
         <div className="w-24 text-sm font-semibold text-forest">{d.time}</div>

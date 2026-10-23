@@ -1,152 +1,375 @@
-
 @import "tailwindcss";
 
 @theme {
   --color-forest: #174d3b;
-  --color-mint: #e6f4ec;
-  --color-canvas: #f5f8f6;
-  --color-ink: #1f2e28;
-  --color-muted: #718078;
-  --shadow-soft: 0 8px 30px rgba(28, 66, 48, .06);
+  --color-forest-light: #24634b;
+  --color-mint: #e8f0e9;
+  --color-sage: #dce8dc;
+  --color-canvas: #f7f7f3;
+  --color-ink: #202b25;
+  --color-muted: #7b857e;
+  --color-border: #e8eae4;
+  --shadow-soft: 0 4px 20px rgba(28, 45, 34, 0.05);
 }
 
 :root {
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system,
-    BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: #1f2e28;
-  background: #f5f8f6;
+  font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+  color: #202b25;
+  background: #f7f7f3;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  min-width: 320px;
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   min-width: 320px;
+  min-height: 100vh;
+  background: #f7f7f3;
+  color: #202b25;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
 button {
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.card {
-  border: 1px solid #f1f5f3;
-  border-radius: 1rem;
-  background: white;
-  padding: 1.25rem;
-  box-shadow: var(--shadow-soft);
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 180ms ease;
+}
+
+a:not([aria-current="page"]):hover {
+  color: #24634b;
+}
+
+a[aria-current="page"],
+a[aria-current="page"]:hover {
+  color: #ffffff;
+}
+
+/* Premium cards */
+
+.card {
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #e8eae4;
+  border-radius: 14px;
+  box-shadow: var(--shadow-soft);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.card:hover {
+  border-color: #d5e1d5;
+  box-shadow: 0 10px 28px rgba(28, 45, 34, 0.07);
+}
+
+/* Primary buttons */
 
 .btn-primary,
 .btn-small-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 8px;
   background: #174d3b;
-  color: white;
+  border: 1px solid #174d3b;
+  color: #ffffff;
   font-weight: 600;
-  transition: background-color 150ms ease;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
 }
 
 .btn-primary {
-  border-radius: 0.75rem;
-  padding: 0.625rem 1rem;
-  font-size: 0.875rem;
+  padding: 11px 18px;
+  border-radius: 9px;
+  font-size: 13px;
 }
 
 .btn-small-primary {
-  gap: 0.375rem;
-  border-radius: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.75rem;
+  padding: 8px 12px;
+  border-radius: 7px;
+  font-size: 12px;
 }
 
 .btn-primary:hover,
 .btn-small-primary:hover {
-  background: rgb(23 77 59 / 90%);
+  background: #24634b;
+  border-color: #24634b;
+  box-shadow: 0 4px 12px rgba(23, 77, 59, 0.15);
 }
 
-.btn-primary:focus-visible {
-  outline: 2px solid rgb(23 77 59 / 30%);
-  outline-offset: 2px;
+.btn-primary:active,
+.btn-small-primary:active {
+  transform: translateY(1px);
 }
+
+.btn-primary:focus-visible,
+.btn-small-primary:focus-visible {
+  outline: 3px solid rgba(23, 77, 59, 0.2);
+  outline-offset: 3px;
+}
+
+/* Secondary buttons */
 
 .btn-secondary,
 .btn-small-secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #e2e8f0;
-  background: white;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid #e2e6df;
+  color: #344239;
   font-weight: 600;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease;
 }
 
 .btn-secondary {
-  gap: 0.5rem;
-  border-radius: 0.75rem;
-  padding: 0.625rem 1rem;
-  font-size: 0.875rem;
+  padding: 10px 16px;
+  border-radius: 9px;
+  font-size: 13px;
 }
 
 .btn-small-secondary {
-  border-radius: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.75rem;
-  color: #475569;
+  padding: 7px 11px;
+  border-radius: 7px;
+  font-size: 12px;
 }
 
 .btn-secondary:hover,
 .btn-small-secondary:hover {
-  background: #f8fafc;
+  background: #f6f8f4;
+  border-color: #cbd7cb;
 }
+
+/* Form fields */
 
 .field {
   display: block;
   width: 100%;
-  margin-top: 0.375rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.75rem;
-  background: white;
-  padding: 0.625rem 0.75rem;
-  font-size: 0.875rem;
-  color: #1f2e28;
+  margin-top: 6px;
+  padding: 11px 13px;
+  background: #ffffff;
+  border: 1px solid #e1e5de;
+  border-radius: 9px;
+  color: #202b25;
+  font-size: 13px;
   outline: none;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
 }
 
 .field::placeholder {
-  color: #94a3b8;
+  color: #a0a79f;
+}
+
+.field:hover {
+  border-color: #cbd6ca;
 }
 
 .field:focus {
-  border-color: #174d3b;
-  box-shadow: 0 0 0 2px rgb(23 77 59 / 10%);
+  border-color: #48755e;
+  box-shadow: 0 0 0 3px rgba(23, 77, 59, 0.08);
 }
 
 .form-label {
   display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #334155;
+  color: #46534a;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.015em;
 }
 
-::selection {
-  background: #d5ecdf;
+/* Tables */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
 }
+
+th {
+  padding: 12px 16px;
+  background: #f8f9f5;
+  border-bottom: 1px solid #e8eae4;
+  color: #7b857e;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #eff0eb;
+  color: #344239;
+  font-size: 13px;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+tbody tr:hover {
+  background: #fafbf8;
+}
+
+/* Selection and keyboard focus */
+
+::selection {
+  background: #dce9dd;
+  color: #174d3b;
+}
+
+:focus-visible {
+  outline-color: #56806a;
+}
+
+/* Scrollbar */
+
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d7ddd5;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b9c5b8;
+}
+
+/* Responsive layout */
 
 @media (min-width: 640px) {
   .card {
-    padding: 1.5rem;
+    padding: 26px;
   }
 }
 
+@media (max-width: 639px) {
+  .card {
+    padding: 18px;
+    border-radius: 12px;
+  }
+
+  .btn-primary {
+    padding: 10px 14px;
+  }
+}
+
+/* Reduced motion accessibility */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* Report/print support */
+@media print {
+  body { background: #fff !important; }
+  aside, header, footer, button { display: none !important; }
+  main { max-width: none !important; padding: 0 !important; }
+  .card { box-shadow: none !important; break-inside: avoid; }
+}
+
+/* MediLink visual refresh: warmer canvas, clearer hierarchy, and more deliberate surfaces. */
+:root {
+  --color-canvas: #f3f5ef;
+  --shadow-soft: 0 8px 28px rgba(28, 45, 34, 0.055);
+}
+
+body {
+  background: #f3f5ef;
+  letter-spacing: -0.008em;
+}
+
+.card {
+  padding: 26px;
+  border-color: #e1e7dd;
+  border-radius: 20px;
+  box-shadow: 0 8px 28px rgba(31, 52, 39, 0.045);
+}
+
+.card:hover {
+  border-color: #cbd9ca;
+  box-shadow: 0 14px 34px rgba(31, 52, 39, 0.075);
+  transform: translateY(-1px);
+}
+
+.btn-primary,
+.btn-small-primary {
+  background: linear-gradient(135deg, #174d3b 0%, #24634b 100%);
+  border-color: #174d3b;
+  box-shadow: 0 3px 8px rgba(23, 77, 59, 0.10);
+}
+
+.btn-primary {
+  border-radius: 11px;
+  padding: 12px 18px;
+}
+
+.btn-secondary,
+.btn-small-secondary {
+  border-color: #dce4d9;
+  border-radius: 10px;
+}
+
+.field {
+  border-radius: 11px;
+  padding: 12px 14px;
+  background: #fdfefb;
+}
+
+/* Keep long tables comfortable on laptop and mobile screens. */
+@media (max-width: 640px) {
+  .card { padding: 18px; border-radius: 16px; }
+  th { padding: 10px 12px; }
+  td { padding: 12px; }
+}

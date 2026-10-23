@@ -221,7 +221,7 @@ function AdminDashboard() {
       <div>
         <p className="text-sm font-medium text-forest">Administration workspace</p>
         <h2 className="mt-1 text-2xl font-semibold tracking-tight">
-          MediSync system overview
+          MediLink system overview
         </h2>
         <p className="mt-2 text-sm text-muted">
           Demo monitoring · No real provider accounts or patient data
