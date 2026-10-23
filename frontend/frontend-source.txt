@@ -1,0 +1,642 @@
+﻿
+
+========== FILE: D:\ddrive\drug-coordination\medisync-frontend-starter\src\main.jsx ==========
+
+import React from 'react'
+import { createRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
+import App from './app/App'
+import './styles.css'
+
+createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <BrowserRouter><App /></BrowserRouter>
+  </React.StrictMode>
+)
+
+
+
+========== FILE: D:\ddrive\drug-coordination\medisync-frontend-starter\src\styles.css ==========
+
+
+@import "tailwindcss";
+
+@theme {
+  --color-forest: #174d3b;
+  --color-mint: #e6f4ec;
+  --color-canvas: #f5f8f6;
+  --color-ink: #1f2e28;
+  --color-muted: #718078;
+  --shadow-soft: 0 8px 30px rgba(28, 66, 48, .06);
+}
+
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #1f2e28;
+  background: #f5f8f6;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.card {
+  border: 1px solid #f1f5f3;
+  border-radius: 1rem;
+  background: white;
+  padding: 1.25rem;
+  box-shadow: var(--shadow-soft);
+}
+
+.btn-primary,
+.btn-small-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: #174d3b;
+  color: white;
+  font-weight: 600;
+  transition: background-color 150ms ease;
+}
+
+.btn-primary {
+  border-radius: 0.75rem;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+}
+
+.btn-small-primary {
+  gap: 0.375rem;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+.btn-primary:hover,
+.btn-small-primary:hover {
+  background: rgb(23 77 59 / 90%);
+}
+
+.btn-primary:focus-visible {
+  outline: 2px solid rgb(23 77 59 / 30%);
+  outline-offset: 2px;
+}
+
+.btn-secondary,
+.btn-small-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;
+  background: white;
+  font-weight: 600;
+}
+
+.btn-secondary {
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+}
+
+.btn-small-secondary {
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  color: #475569;
+}
+
+.btn-secondary:hover,
+.btn-small-secondary:hover {
+  background: #f8fafc;
+}
+
+.field {
+  display: block;
+  width: 100%;
+  margin-top: 0.375rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  background: white;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  color: #1f2e28;
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.field::placeholder {
+  color: #94a3b8;
+}
+
+.field:focus {
+  border-color: #174d3b;
+  box-shadow: 0 0 0 2px rgb(23 77 59 / 10%);
+}
+
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #334155;
+}
+
+::selection {
+  background: #d5ecdf;
+}
+
+@media (min-width: 640px) {
+  .card {
+    padding: 1.5rem;
+  }
+}
+
+
+
+
+========== FILE: D:\ddrive\drug-coordination\medisync-frontend-starter\src\app\App.jsx ==========
+
+import { useState } from 'react'
+import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
+import { AppProvider } from '../context/AppContext'
+import Layout from '../components/Layout'
+import Login from '../pages/Login'
+import Dashboard from '../pages/Dashboard'
+import { Alerts, History, Medications, Patients, Prescriptions, SafetyCenter, Schedule } from '../pages/Pages'
+
+function RoutedApp() {
+  const [role, setRole] = useState(() => sessionStorage.getItem('medisync-role') || '')
+  const navigate = useNavigate()
+  const selectRole = (nextRole) => { setRole(nextRole); sessionStorage.setItem('medisync-role', nextRole); navigate('/') }
+  if (!role) return <Routes><Route path="/login" element={<Login onSelect={selectRole}/>} /><Route path="*" element={<Navigate to="/login" replace/>}/></Routes>
+  return <Routes>
+    <Route path="/login" element={<Login onSelect={selectRole}/>} />
+    <Route path="*" element={<Layout role={role} setRole={selectRole}><Routes>
+      <Route path="/" element={<Dashboard role={role}/>} />
+      <Route path="/medications" element={role==='patient'?<Medications/>:<Navigate to="/" replace/>}/>
+      <Route path="/schedule" element={role==='patient'?<Schedule/>:<Navigate to="/" replace/>}/>
+      <Route path="/safety" element={role!=='caregiver'?<SafetyCenter/>:<Navigate to="/" replace/>}/>
+      <Route path="/alerts" element={<Alerts/>}/>
+      <Route path="/history" element={<History/>}/>
+      <Route path="/patients" element={role!=='patient'?<Patients/>:<Navigate to="/" replace/>}/>
+      <Route path="/prescriptions" element={role==='doctor'?<Prescriptions/>:<Navigate to="/" replace/>}/>
+      <Route path="*" element={<Navigate to="/" replace/>}/>
+    </Routes></Layout>} />
+  </Routes>
+}
+
+export default function App() {
+  return <AppProvider><RoutedApp/></AppProvider>
+}
+
+
+
+========== FILE: D:\ddrive\drug-coordination\medisync-frontend-starter\src\components\Layout.jsx ==========
+
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { Activity, Bell, CalendarClock, ClipboardList, FileText, HeartPulse, History, LayoutDashboard, LogOut, Menu, Pill, ShieldCheck, UserRound, Users, X } from 'lucide-react'
+import { useState } from 'react'
+
+const navByRole = {
+  patient: [
+    ['Dashboard', '/', LayoutDashboard], ['Medications', '/medications', Pill], ['Dose schedule', '/schedule', CalendarClock],
+    ['Safety center', '/safety', ShieldCheck], ['Alerts', '/alerts', Bell], ['History', '/history', History]
+  ],
+  doctor: [
+    ['Dashboard', '/', LayoutDashboard], ['Patients', '/patients', Users], ['Prescriptions', '/prescriptions', FileText],
+    ['Safety center', '/safety', ShieldCheck], ['History', '/history', History]
+  ],
+  caregiver: [
+    ['Dashboard', '/', LayoutDashboard], ['Patients', '/patients', Users], ['Alerts', '/alerts', Bell], ['History', '/history', History]
+  ]
+}
+const titles = {
+  '/': 'Dashboard', '/medications': 'Medications', '/schedule': 'Dose schedule', '/safety': 'Medication Safety Shield',
+  '/alerts': 'Alerts & notifications', '/history': 'Shared medication history', '/patients': 'Patient records', '/prescriptions': 'Prescriptions'
+}
+
+export default function Layout({ role, setRole, children }) {
+  const [open, setOpen] = useState(false)
+  const location = useLocation()
+  const navigate = useNavigate()
+  const nav = navByRole[role] || navByRole.patient
+  const roleName = role.charAt(0).toUpperCase() + role.slice(1)
+  return <div className="min-h-screen bg-canvas text-ink">
+    {open && <button aria-label="Close navigation" className="fixed inset-0 z-30 bg-slate-900/30 md:hidden" onClick={() => setOpen(false)} />}
+    <aside className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-slate-100 bg-white px-4 py-5 transition-transform md:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div className="flex items-center gap-3 px-2">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-forest text-white"><HeartPulse size={23}/></div>
+        <div><p className="text-lg font-bold tracking-tight">MediSync</p><p className="text-xs text-muted">Safer coordinated care</p></div>
+        <button className="ml-auto md:hidden" onClick={() => setOpen(false)} aria-label="Close menu"><X size={18}/></button>
+      </div>
+      <div className="mt-8 rounded-2xl bg-mint p-3"><div className="flex items-center gap-2 text-sm font-semibold text-forest"><Activity size={16}/> Demo workspace</div><p className="mt-1 text-xs leading-5 text-forest/80">Fictional patient data Â· local demo</p></div>
+      <p className="mb-2 mt-8 px-3 text-[10px] font-bold uppercase tracking-[.18em] text-slate-400">Workspace</p>
+      <nav className="space-y-1">
+        {nav.map(([label, path, Icon]) => <NavLink key={path} to={path} end={path === '/'} onClick={() => setOpen(false)} className={({isActive}) => `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${isActive ? 'bg-forest text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50 hover:text-forest'}`}><Icon size={18}/>{label}</NavLink>)}
+      </nav>
+      <div className="mt-auto border-t border-slate-100 pt-4">
+        <div className="flex items-center gap-3 rounded-xl p-2"><div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold">{roleName[0]}</div><div className="min-w-0 flex-1"><p className="text-sm font-semibold">{role === 'doctor' ? 'Dr. Meera Rao' : role === 'caregiver' ? 'Ananya Sharma' : 'Aarav Sharma'}</p><p className="text-xs text-muted">{roleName} demo</p></div><button title="Exit demo" onClick={() => navigate('/login')} className="rounded-lg p-2 text-muted hover:bg-slate-100"><LogOut size={16}/></button></div>
+      </div>
+    </aside>
+    <div className="md:pl-64">
+      <header className="sticky top-0 z-20 flex h-[72px] items-center justify-between border-b border-slate-100 bg-white/90 px-4 backdrop-blur md:px-8">
+        <div className="flex items-center gap-3"><button onClick={() => setOpen(true)} className="rounded-lg p-2 hover:bg-slate-100 md:hidden" aria-label="Open menu"><Menu size={20}/></button><div><p className="text-xs text-muted">MediSync / {roleName}</p><h1 className="text-lg font-semibold">{titles[location.pathname] || 'Dashboard'}</h1></div></div>
+        <div className="flex items-center gap-2"><button onClick={() => navigate('/alerts')} aria-label="View alerts" className="relative rounded-xl border border-slate-200 p-2.5 text-slate-600 hover:bg-slate-50"><Bell size={18}/><span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-white"/></button><button onClick={() => navigate('/login')} className="hidden items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm sm:flex"><UserRound size={16}/><span>{roleName}</span></button></div>
+      </header>
+      <main className="mx-auto max-w-[1500px] px-4 py-6 md:px-8 md:py-8">{children}</main>
+      <footer className="px-6 pb-6 text-center text-xs text-slate-400">MediSync demo Â· Fictional data only Â· Not a medical decision system</footer>
+    </div>
+  </div>
+}
+
+
+
+========== FILE: D:\ddrive\drug-coordination\medisync-frontend-starter\src\components\ui.jsx ==========
+
+import { AlertCircle, CheckCircle2, Clock3, XCircle } from 'lucide-react'
+
+export function StatCard({ label, value, note, icon: Icon, tint = 'green' }) {
+  const tints = {
+    green: 'bg-mint text-forest',
+    amber: 'bg-amber-50 text-amber-700',
+    blue: 'bg-sky-50 text-sky-700',
+    rose: 'bg-rose-50 text-rose-700'
+  }
+  return <div className="card flex items-start justify-between gap-3">
+    <div><p className="text-sm text-muted">{label}</p><p className="mt-2 text-3xl font-semibold tracking-tight">{value}</p><p className="mt-1 text-xs text-muted">{note}</p></div>
+    <div className={`rounded-xl p-3 ${tints[tint]}`}><Icon size={20}/></div>
+  </div>
+}
+
+export function StatusBadge({ status }) {
+  const map = {
+    taken: ['bg-emerald-50 text-emerald-700', <CheckCircle2 size={13}/>],
+    pending: ['bg-amber-50 text-amber-700', <Clock3 size={13}/>],
+    missed: ['bg-rose-50 text-rose-700', <XCircle size={13}/>],
+    Active: ['bg-emerald-50 text-emerald-700', <CheckCircle2 size={13}/>],
+    Discontinued: ['bg-slate-100 text-slate-600', <XCircle size={13}/>],
+    Created: ['bg-amber-50 text-amber-700', <Clock3 size={13}/>],
+    Delivered: ['bg-sky-50 text-sky-700', <CheckCircle2 size={13}/>],
+    Acknowledged: ['bg-emerald-50 text-emerald-700', <CheckCircle2 size={13}/>]
+  }
+  const [style, Icon] = map[status] || ['bg-slate-100 text-slate-600', <AlertCircle size={13}/>]
+  return <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium capitalize ${style}`}><Icon/>{status}</span>
+}
+
+export function SectionHeading({ title, subtitle, action }) {
+  return <div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-lg font-semibold">{title}</h2>{subtitle && <p className="mt-1 text-sm text-muted">{subtitle}</p>}</div>{action}</div>
+}
+
+export function EmptyState({ title, detail }) {
+  return <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center"><p className="font-medium">{title}</p><p className="mt-1 text-sm text-muted">{detail}</p></div>
+}
+
+
+
+========== FILE: D:\ddrive\drug-coordination\medisync-frontend-starter\src\context\AppContext.jsx ==========
+
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { demoPatient, demoAlerts, demoHistory } from '../data/demo'
+
+const AppContext = createContext(null)
+const STORAGE_KEY = 'medisync-demo-state-v1'
+
+const initialState = {
+  patient: demoPatient,
+  alerts: demoAlerts,
+  history: demoHistory,
+  prescriptions: [...demoPatient.medications]
+}
+
+export function AppProvider({ children }) {
+  const [state, setState] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      return saved ? JSON.parse(saved) : initialState
+    } catch {
+      return initialState
+    }
+  })
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+  }, [state])
+
+  const addHistory = (type, detail, actor = 'Demo user') => ({
+    id: Date.now(), type, detail, actor, time: new Date().toLocaleString()
+  })
+
+  const markDose = (doseId, status) => {
+    const dose = state.patient.doses.find(d => d.id === doseId)
+    if (!dose) return
+    setState(prev => ({
+      ...prev,
+      patient: { ...prev.patient, doses: prev.patient.doses.map(d => d.id === doseId ? { ...d, status } : d) },
+      history: [addHistory('Dose recorded', `${dose.medicine} marked as ${status}`, prev.patient.name), ...prev.history]
+    }))
+  }
+
+  const acknowledgeAlert = (alertId) => {
+    setState(prev => ({
+      ...prev,
+      alerts: prev.alerts.map(a => a.id === alertId ? { ...a, status: 'Acknowledged' } : a),
+      history: [addHistory('Alert acknowledged', `Alert ${alertId} acknowledged`, prev.patient.name), ...prev.history]
+    }))
+  }
+
+  const createPrescription = (form) => {
+    const medication = {
+      id: `med-${Date.now()}`,
+      name: form.name.trim(),
+      strength: `${form.dose} ${form.unit}`,
+      route: form.route,
+      frequency: form.frequency,
+      time: form.time || '09:00 AM',
+      prescriber: 'Demo clinician',
+      startDate: new Date().toLocaleDateString(),
+      status: 'Active',
+      ingredient: form.ingredient.trim().toLowerCase()
+    }
+    setState(prev => ({
+      ...prev,
+      prescriptions: [medication, ...prev.prescriptions],
+      patient: { ...prev.patient, medications: [medication, ...prev.patient.medications] },
+      history: [addHistory('Prescription created', `${medication.name} ${medication.strength} added (demo)`, 'Demo clinician'), ...prev.history]
+    }))
+    return medication
+  }
+
+  const discontinuePrescription = (id) => {
+    const medication = state.prescriptions.find(m => m.id === id)
+    if (!medication) return
+    setState(prev => ({
+      ...prev,
+      prescriptions: prev.prescriptions.map(m => m.id === id ? { ...m, status: 'Discontinued' } : m),
+      patient: { ...prev.patient, medications: prev.patient.medications.map(m => m.id === id ? { ...m, status: 'Discontinued' } : m) },
+      history: [addHistory('Prescription discontinued', `${medication.name} marked discontinued (demo)`, 'Demo clinician'), ...prev.history]
+    }))
+  }
+
+  const value = useMemo(() => ({
+    ...state, markDose, acknowledgeAlert, createPrescription, discontinuePrescription
+  }), [state])
+
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>
+}
+
+export const useApp = () => useContext(AppContext)
+
+
+
+========== FILE: D:\ddrive\drug-coordination\medisync-frontend-starter\src\data\demo.js ==========
+
+export const demoPatient = {
+  id: 'patient-demo-001',
+  name: 'Aarav Sharma',
+  age: 42,
+  allergies: ['Penicillin'],
+  allergyStatus: 'recorded',
+  medications: [
+    { id: 'med-1', name: 'Metformin', strength: '500 mg', route: 'Oral', frequency: 'Twice daily', time: '08:00 AM', prescriber: 'Dr. Meera Rao', startDate: '12 Oct 2026', status: 'Active', ingredient: 'metformin' },
+    { id: 'med-2', name: 'Vitamin D3', strength: '1000 IU', route: 'Oral', frequency: 'Once daily', time: '09:00 AM', prescriber: 'Dr. Meera Rao', startDate: '02 Oct 2026', status: 'Active', ingredient: 'cholecalciferol' },
+    { id: 'med-3', name: 'Atorvastatin', strength: '10 mg', route: 'Oral', frequency: 'Once daily', time: '08:00 PM', prescriber: 'Dr. Arjun Nair', startDate: '20 Sep 2026', status: 'Active', ingredient: 'atorvastatin' }
+  ],
+  doses: [
+    { id: 'dose-1', medicationId: 'med-1', medicine: 'Metformin', dose: '500 mg', time: '08:00 AM', status: 'taken' },
+    { id: 'dose-2', medicationId: 'med-2', medicine: 'Vitamin D3', dose: '1000 IU', time: '09:00 AM', status: 'pending' },
+    { id: 'dose-3', medicationId: 'med-3', medicine: 'Atorvastatin', dose: '10 mg', time: '08:00 PM', status: 'pending' }
+  ]
+}
+
+export const demoAlerts = [
+  { id: 'alert-1', title: 'Dose awaiting confirmation', detail: 'Vitamin D3 Â· scheduled for 09:00 AM', time: 'Today, 9:05 AM', status: 'Created', severity: 'info' },
+  { id: 'alert-2', title: 'Medication profile updated', detail: 'Atorvastatin was added to your active list', time: 'Yesterday, 4:30 PM', status: 'Delivered', severity: 'info' }
+]
+
+export const demoHistory = [
+  { id: 1, type: 'Dose recorded', detail: 'Metformin 500 mg marked as taken', actor: 'Aarav Sharma', time: 'Today, 8:03 AM' },
+  { id: 2, type: 'Prescription created', detail: 'Atorvastatin 10 mg added to active medication list', actor: 'Dr. Arjun Nair', time: 'Yesterday, 4:30 PM' },
+  { id: 3, type: 'Safety check performed', detail: 'Demo rules checked against the current medication list', actor: 'Dr. Meera Rao', time: 'Yesterday, 4:25 PM' },
+  { id: 4, type: 'Prescription updated', detail: 'Metformin schedule confirmed as twice daily', actor: 'Dr. Meera Rao', time: '12 Oct 2026, 10:15 AM' }
+]
+
+
+
+========== FILE: D:\ddrive\drug-coordination\medisync-frontend-starter\src\pages\Dashboard.jsx ==========
+
+import { useMemo, useState } from 'react'
+import { Activity, ArrowRight, CalendarDays, Check, CheckCircle2, Clock3, Pill, ShieldCheck, TriangleAlert, X } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { useApp } from '../context/AppContext'
+import { EmptyState, SectionHeading, StatCard, StatusBadge } from '../components/ui'
+
+function PatientDashboard() {
+  const { patient, markDose, alerts } = useApp()
+  const navigate = useNavigate()
+  const taken = patient.doses.filter(d => d.status === 'taken').length
+  const pending = patient.doses.filter(d => d.status === 'pending').length
+  const missed = patient.doses.filter(d => d.status === 'missed').length
+  const today = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
+  return <div className="space-y-7">
+    <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-sm font-medium text-forest">Good morning, Aarav</p><h2 className="mt-1 text-2xl font-semibold tracking-tight">Your health, in sync.</h2><p className="mt-2 text-sm text-muted">{today} Â· Here's your medication overview.</p></div><button onClick={() => navigate('/schedule')} className="btn-primary"><CalendarDays size={16}/> View schedule</button></div>
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><StatCard label="Active medications" value={patient.medications.filter(m => m.status === 'Active').length} note="Across your care team" icon={Pill}/><StatCard label="Doses due today" value={patient.doses.length} note="Scheduled doses" icon={Clock3} tint="blue"/><StatCard label="Doses taken" value={taken} note={`${Math.round(taken / Math.max(1, patient.doses.length) * 100)}% of today's schedule`} icon={CheckCircle2}/><StatCard label="Pending actions" value={pending + missed} note="Needs your attention" icon={TriangleAlert} tint={pending + missed ? 'amber' : 'green'}/></div>
+    <div className="grid gap-6 xl:grid-cols-[1.45fr_.85fr]">
+      <section className="card"><SectionHeading title="Today's medication schedule" subtitle="Record each dose when appropriate." action={<button className="text-sm font-semibold text-forest" onClick={() => navigate('/schedule')}>Full schedule <ArrowRight className="ml-1 inline" size={15}/></button>}/>
+        <div className="divide-y divide-slate-100">{patient.doses.map(dose => <div key={dose.id} className="flex flex-wrap items-center gap-3 py-4 first:pt-1 last:pb-1"><div className={`flex h-11 w-11 items-center justify-center rounded-xl ${dose.status === 'taken' ? 'bg-mint text-forest' : 'bg-slate-50 text-slate-500'}`}><Pill size={20}/></div><div className="min-w-[130px] flex-1"><p className="font-semibold">{dose.medicine}</p><p className="mt-1 text-xs text-muted">{dose.dose} Â· {dose.time}</p></div><StatusBadge status={dose.status}/>{dose.status !== 'taken' && dose.status !== 'missed' && <div className="flex gap-2"><button onClick={() => markDose(dose.id, 'taken')} className="btn-small-primary"><Check size={14}/> Taken</button><button onClick={() => markDose(dose.id, 'missed')} className="btn-small-secondary">Missed</button></div>}</div>)}</div>
+      </section>
+      <div className="space-y-6">
+        <section className="card"><SectionHeading title="Allergies" subtitle="Information recorded in your profile"/><div className="rounded-xl border border-amber-200 bg-amber-50 p-4"><div className="flex items-center gap-2 font-semibold text-amber-900"><TriangleAlert size={17}/> Recorded allergy</div><p className="mt-2 text-sm text-amber-900">{patient.allergies.join(', ')}</p><p className="mt-2 text-xs leading-5 text-amber-800">Confirm this information with your healthcare professional if it is incorrect or incomplete.</p></div></section>
+        <section className="card"><SectionHeading title="Recent alerts" action={<button className="text-sm font-semibold text-forest" onClick={() => navigate('/alerts')}>View all</button>}/>{alerts.slice(0,2).map(a => <div key={a.id} className="flex gap-3 border-t border-slate-100 py-3 first:border-0"><div className="mt-0.5 rounded-lg bg-amber-50 p-2 text-amber-700"><Activity size={16}/></div><div><p className="text-sm font-semibold">{a.title}</p><p className="mt-1 text-xs leading-5 text-muted">{a.detail}</p></div></div>)}</section>
+      </div>
+    </div>
+    <section className="card"><SectionHeading title="Your active medications" subtitle="Your current shared medication profile" action={<button className="text-sm font-semibold text-forest" onClick={() => navigate('/medications')}>See all</button>}/><div className="grid gap-3 md:grid-cols-3">{patient.medications.filter(m => m.status === 'Active').map(m => <div key={m.id} className="rounded-xl border border-slate-100 p-4"><div className="flex items-start justify-between"><div className="rounded-lg bg-mint p-2 text-forest"><Pill size={18}/></div><StatusBadge status={m.status}/></div><p className="mt-4 font-semibold">{m.name}</p><p className="mt-1 text-sm text-muted">{m.strength} Â· {m.route}</p><p className="mt-3 text-xs text-muted">{m.frequency} Â· {m.time}</p><p className="mt-2 text-xs text-muted">Prescribed by {m.prescriber}</p></div>)}</div></section>
+  </div>
+}
+
+function DoctorDashboard() {
+  const { patient, prescriptions, createPrescription, discontinuePrescription, history } = useApp()
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState({ name: '', ingredient: '', dose: '', unit: 'mg', route: 'Oral', frequency: 'Once daily', time: '09:00 AM' })
+  const [message, setMessage] = useState('')
+  const [query, setQuery] = useState('')
+  const active = prescriptions.filter(m => m.status === 'Active')
+  const runCheck = () => {
+    if (!form.name.trim() || !form.ingredient.trim()) { setMessage('Enter a medication name and active ingredient before running the demo check.'); return }
+    const ingredient = form.ingredient.trim().toLowerCase()
+    const duplicate = active.find(m => (m.ingredient || '').toLowerCase() === ingredient)
+    setMessage(duplicate
+      ? `Potential duplicate ingredient found: ${duplicate.name}. This is a simulated demo rule; a clinician must verify the evidence.`
+      : 'No known match found in the limited demo rules. This does not prove the combination is safe.')
+  }
+  const submit = (e) => { e.preventDefault(); if (!form.name.trim() || !form.dose.trim() || !form.ingredient.trim()) return; createPrescription(form); setForm({ name: '', ingredient: '', dose: '', unit: 'mg', route: 'Oral', frequency: 'Once daily', time: '09:00 AM' }); setMessage('Demo prescription saved locally. Connect the API before clinical use.'); setShowForm(false) }
+  const filtered = prescriptions.filter(m => m.name.toLowerCase().includes(query.toLowerCase()))
+  return <div className="space-y-7">
+    <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-sm font-medium text-forest">Clinician workspace</p><h2 className="mt-1 text-2xl font-semibold tracking-tight">Good morning, Dr. Rao</h2><p className="mt-2 text-sm text-muted">Review the shared record and document clinical decisions.</p></div><button onClick={() => {setShowForm(!showForm);setMessage('')}} className="btn-primary"><Pill size={16}/> New prescription</button></div>
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><StatCard label="Authorized patients" value="1" note="Demo patient record" icon={UsersIcon}/><StatCard label="Active prescriptions" value={active.length} note="Across demo records" icon={Pill}/><StatCard label="Needs review" value={patient.doses.filter(d => d.status !== 'taken').length} note="Dose status not confirmed" icon={TriangleAlert} tint="amber"/><StatCard label="Recent events" value={history.length} note="In shared history" icon={Activity} tint="blue"/></div>
+    <section className="card"><SectionHeading title="Patient record" subtitle="Only fictional, demo-authorized records are available here."/><div className="flex flex-wrap items-center gap-4 rounded-xl bg-slate-50 p-4"><div className="flex h-12 w-12 items-center justify-center rounded-full bg-mint font-semibold text-forest">AS</div><div className="flex-1"><p className="font-semibold">{patient.name}</p><p className="mt-1 text-sm text-muted">Age {patient.age} Â· Allergy: {patient.allergies.join(', ')}</p></div><span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700">Demo access</span></div>
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3"><div><p className="font-semibold">Prescription list</p><p className="mt-1 text-sm text-muted">Previous versions remain in history.</p></div><input className="field max-w-xs" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search medication..."/></div>
+      <div className="mt-3 overflow-x-auto"><table className="w-full min-w-[600px] text-left text-sm"><thead className="text-xs uppercase tracking-wide text-muted"><tr><th className="py-3">Medication</th><th>Schedule</th><th>Status</th><th>Action</th></tr></thead><tbody>{filtered.map(m => <tr key={m.id} className="border-t border-slate-100"><td className="py-4"><p className="font-semibold">{m.name}</p><p className="mt-1 text-xs text-muted">{m.strength} Â· {m.route}</p></td><td>{m.frequency}</td><td><StatusBadge status={m.status}/></td><td>{m.status === 'Active' && <button onClick={() => { if (window.confirm(`Mark ${m.name} as discontinued in this demo?`)) discontinuePrescription(m.id) }} className="text-xs font-semibold text-rose-700 hover:underline">Discontinue</button>}</td></tr>)}</tbody></table></div>
+    </section>
+    {showForm && <section className="card"><SectionHeading title="Create prescription" subtitle="Demo-only form; prescriber identity is fixed by the application."/><form onSubmit={submit} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <label className="form-label">Medication name<input required className="field" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="Medication name"/></label>
+      <label className="form-label">Active ingredient<input required className="field" value={form.ingredient} onChange={e=>setForm({...form,ingredient:e.target.value})} placeholder="Ingredient (for demo rule)"/></label>
+      <label className="form-label">Dose<input required className="field" value={form.dose} onChange={e=>setForm({...form,dose:e.target.value})} placeholder="e.g. 500"/></label>
+      <label className="form-label">Unit<select className="field" value={form.unit} onChange={e=>setForm({...form,unit:e.target.value})}><option>mg</option><option>mcg</option><option>g</option><option>IU</option><option>mL</option></select></label>
+      <label className="form-label">Route<select className="field" value={form.route} onChange={e=>setForm({...form,route:e.target.value})}><option>Oral</option><option>Topical</option><option>Inhalation</option><option>Injection</option><option>Other</option></select></label>
+      <label className="form-label">Frequency<select className="field" value={form.frequency} onChange={e=>setForm({...form,frequency:e.target.value})}><option>Once daily</option><option>Twice daily</option><option>Three times daily</option><option>As directed</option></select></label>
+      <label className="form-label">Scheduled time<input className="field" value={form.time} onChange={e=>setForm({...form,time:e.target.value})} placeholder="09:00 AM"/></label>
+      <div className="flex flex-wrap items-end gap-2 sm:col-span-2 lg:col-span-3"><button type="button" onClick={runCheck} className="btn-secondary"><ShieldCheck size={16}/> Run demo safety check</button><button type="submit" className="btn-primary">Save demo prescription</button><button type="button" onClick={()=>setShowForm(false)} className="btn-secondary">Cancel</button></div>
+    </form>{message && <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">{message}</div>}</section>}
+    <section className="card"><SectionHeading title="Recent clinical history" subtitle="Audit-friendly event timeline"/>{history.slice(0,4).map(h => <div key={h.id} className="flex gap-3 border-t border-slate-100 py-3 first:border-0"><div className="mt-1 rounded-lg bg-mint p-2 text-forest"><Activity size={16}/></div><div><p className="text-sm font-semibold">{h.type}</p><p className="mt-1 text-sm text-muted">{h.detail}</p><p className="mt-1 text-xs text-slate-400">{h.time} Â· {h.actor}</p></div></div>)}</section>
+  </div>
+}
+function UsersIcon(props) { return <Activity {...props}/> }
+
+function CaregiverDashboard() {
+  const { patient, alerts, acknowledgeAlert, history } = useApp()
+  const missed = patient.doses.filter(d => d.status === 'missed').length
+  return <div className="space-y-7"><div><p className="text-sm font-medium text-forest">Care team workspace</p><h2 className="mt-1 text-2xl font-semibold tracking-tight">Medication support overview</h2><p className="mt-2 text-sm text-muted">Fictional patient record shared for this demo.</p></div>
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><StatCard label="Supported patients" value="1" note="Authorized demo record" icon={Activity}/><StatCard label="Active medicines" value={patient.medications.filter(m=>m.status==='Active').length} note="Current medication list" icon={Pill}/><StatCard label="Missed doses" value={missed} note="Requires follow-up" icon={TriangleAlert} tint={missed?'amber':'green'}/><StatCard label="Alerts" value={alerts.filter(a=>a.status!=='Acknowledged').length} note="Awaiting acknowledgement" icon={Clock3} tint="blue"/></div>
+    <section className="card"><SectionHeading title="Patient adherence" subtitle={patient.name}/><div className="rounded-xl bg-slate-50 p-4"><div className="flex items-center justify-between"><div><p className="font-semibold">{patient.name}</p><p className="mt-1 text-sm text-muted">Today's dose status</p></div><span className="text-sm font-semibold text-forest">{patient.doses.filter(d=>d.status==='taken').length} of {patient.doses.length} taken</span></div><div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-forest" style={{width:`${patient.doses.filter(d=>d.status==='taken').length/Math.max(1,patient.doses.length)*100}%`}}/></div></div></section>
+    <section className="card"><SectionHeading title="Alerts requiring attention" subtitle="Acknowledge to record that the alert has been seen."/><div className="space-y-3">{alerts.map(a=><div key={a.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-100 p-4"><div className="rounded-xl bg-amber-50 p-3 text-amber-700"><TriangleAlert size={19}/></div><div className="min-w-[180px] flex-1"><p className="font-semibold">{a.title}</p><p className="mt-1 text-sm text-muted">{a.detail}</p><p className="mt-1 text-xs text-slate-400">{a.time}</p></div><StatusBadge status={a.status}/>{a.status!=='Acknowledged'&&<button onClick={()=>acknowledgeAlert(a.id)} className="btn-small-primary">Acknowledge</button>}</div>)}</div></section>
+    <section className="card"><SectionHeading title="Latest events"/>{history.slice(0,3).map(h=><div key={h.id} className="border-t border-slate-100 py-3 first:border-0"><p className="text-sm font-semibold">{h.type}</p><p className="mt-1 text-sm text-muted">{h.detail}</p><p className="mt-1 text-xs text-slate-400">{h.time}</p></div>)}</section>
+  </div>
+}
+
+export default function Dashboard({ role }) {
+  if (role === 'doctor') return <DoctorDashboard/>
+  if (role === 'caregiver') return <CaregiverDashboard/>
+  return <PatientDashboard/>
+}
+
+
+
+========== FILE: D:\ddrive\drug-coordination\medisync-frontend-starter\src\pages\Login.jsx ==========
+
+import { HeartPulse, ShieldCheck, UserRound, Stethoscope, Users } from 'lucide-react'
+
+const roles = [
+  { id: 'patient', name: 'Patient', desc: 'Track medicines and daily doses', Icon: UserRound },
+  { id: 'doctor', name: 'Doctor', desc: 'Manage prescriptions and review safety', Icon: Stethoscope },
+  { id: 'caregiver', name: 'Caregiver', desc: 'Support adherence and acknowledge alerts', Icon: Users }
+]
+
+export default function Login({ onSelect }) {
+  return <div className="grid min-h-screen bg-white lg:grid-cols-[1.05fr_.95fr]">
+    <section className="relative hidden overflow-hidden bg-forest p-12 text-white lg:flex lg:flex-col lg:justify-between">
+      <div className="flex items-center gap-3"><div className="rounded-xl bg-white/15 p-3"><HeartPulse size={25}/></div><span className="text-xl font-bold">MediSync</span></div>
+      <div className="relative z-10 max-w-xl"><div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-sm"><ShieldCheck size={15}/> One medication record</div><h1 className="text-5xl font-semibold leading-tight tracking-tight">Safer care starts with a shared picture.</h1><p className="mt-5 max-w-md text-lg leading-8 text-white/75">Bring medication schedules, prescription changes and safety reviews together in one coordinated workspace.</p><div className="mt-10 grid grid-cols-3 gap-3">{[['01','Coordinate'],['02','Review'],['03','Track']].map(x => <div key={x[0]} className="rounded-2xl border border-white/15 bg-white/5 p-4"><p className="text-xs text-white/50">{x[0]}</p><p className="mt-2 font-medium">{x[1]}</p></div>)}</div></div>
+      <p className="text-xs text-white/50">Hackathon demo Â· Fictional data Â· For demonstration only</p>
+      <div className="pointer-events-none absolute -bottom-24 -right-20 h-96 w-96 rounded-full border-[60px] border-white/5"/>
+    </section>
+    <section className="flex items-center justify-center px-5 py-12 sm:px-10">
+      <div className="w-full max-w-md"><div className="mb-8 flex items-center gap-3 lg:hidden"><div className="rounded-xl bg-forest p-3 text-white"><HeartPulse size={24}/></div><span className="text-xl font-bold">MediSync</span></div><p className="text-sm font-semibold uppercase tracking-widest text-forest">Welcome</p><h2 className="mt-2 text-3xl font-semibold tracking-tight">Enter your workspace</h2><p className="mt-3 text-sm leading-6 text-muted">Choose a demo role to explore the app. No account or real patient information is needed.</p>
+        <div className="mt-8 space-y-3">{roles.map(({id,name,desc,Icon}) => <button key={id} onClick={() => onSelect(id)} className="group flex w-full items-center gap-4 rounded-2xl border border-slate-200 p-4 text-left transition hover:border-forest hover:bg-mint/40"><div className="rounded-xl bg-slate-50 p-3 text-forest group-hover:bg-mint"><Icon size={22}/></div><div className="flex-1"><p className="font-semibold">{name}</p><p className="mt-1 text-sm text-muted">{desc}</p></div><span className="text-slate-300 group-hover:text-forest">â†’</span></button>)}</div>
+        <div className="mt-6 rounded-xl bg-amber-50 p-3 text-xs leading-5 text-amber-800">Demo mode only. Medication safety findings are simulated and must not be used for clinical decisions.</div>
+      </div>
+    </section>
+  </div>
+}
+
+
+
+========== FILE: D:\ddrive\drug-coordination\medisync-frontend-starter\src\pages\Pages.jsx ==========
+
+import { useMemo, useState } from 'react'
+import { AlertTriangle, Check, Clock3, FileText, History as HistoryIcon, Pill, Search, ShieldCheck, Stethoscope } from 'lucide-react'
+import { useApp } from '../context/AppContext'
+import { EmptyState, SectionHeading, StatusBadge } from '../components/ui'
+
+export function Medications() {
+  const { patient } = useApp()
+  const [search, setSearch] = useState('')
+  const meds = patient.medications.filter(m => m.name.toLowerCase().includes(search.toLowerCase()))
+  return <div className="space-y-5"><SectionHeading title="Medication profile" subtitle="A shared view of current and discontinued medicines."/><div className="card"><div className="relative mb-5 max-w-md"><Search className="absolute left-3 top-3 text-slate-400" size={17}/><input className="field pl-10" placeholder="Search medication..." value={search} onChange={e=>setSearch(e.target.value)}/></div>{meds.length===0?<EmptyState title="No medicines found" detail="Try a different search term."/>:<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{meds.map(m=><article key={m.id} className="rounded-2xl border border-slate-100 p-5"><div className="flex items-start justify-between"><div className="rounded-xl bg-mint p-3 text-forest"><Pill size={20}/></div><StatusBadge status={m.status}/></div><h3 className="mt-4 text-lg font-semibold">{m.name}</h3><p className="mt-1 text-sm text-muted">{m.strength} Â· {m.route}</p><div className="mt-4 space-y-2 border-t border-slate-100 pt-4 text-sm"><p><span className="text-muted">Frequency:</span> {m.frequency}</p><p><span className="text-muted">Time:</span> {m.time}</p><p><span className="text-muted">Start date:</span> {m.startDate}</p><p><span className="text-muted">Prescriber:</span> {m.prescriber}</p></div></article>)}</div>}</div></div>
+}
+
+export function Schedule() {
+  const { patient, markDose } = useApp()
+  return <div className="space-y-5"><SectionHeading title="Dose schedule" subtitle="Mark the event after following the prescribed instructions."/><div className="card"><div className="mb-4 rounded-xl bg-sky-50 p-4 text-sm leading-6 text-sky-900">Only record what happened. MediSync does not advise changing, skipping or doubling a dose.</div>{patient.doses.map(d=><div key={d.id} className="flex flex-wrap items-center gap-4 border-t border-slate-100 py-4 first:border-0"><div className="w-24 text-sm font-semibold text-forest">{d.time}</div><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-mint text-forest"><Pill size={18}/></div><div className="min-w-[150px] flex-1"><p className="font-semibold">{d.medicine}</p><p className="mt-1 text-sm text-muted">{d.dose}</p></div><StatusBadge status={d.status}/>{d.status!=='taken'&&d.status!=='missed'&&<div className="flex gap-2"><button onClick={()=>markDose(d.id,'taken')} className="btn-small-primary"><Check size={14}/> Taken</button><button onClick={()=>markDose(d.id,'missed')} className="btn-small-secondary">Missed</button></div>}</div>)}</div></div>
+}
+
+export function SafetyCenter() {
+  const { patient, history } = useApp()
+  const [name, setName] = useState('')
+  const [ingredient, setIngredient] = useState('')
+  const [result, setResult] = useState(null)
+  const check = (e) => {
+    e.preventDefault()
+    if (!name.trim() || !ingredient.trim()) { setResult({kind:'unknown', title:'Unable to verify', detail:'Enter a medication name and ingredient. The demo cannot verify incomplete medication information.'}); return }
+    const matches = patient.medications.filter(m => m.status === 'Active' && (m.ingredient || '').toLowerCase() === ingredient.trim().toLowerCase())
+    if (matches.length) setResult({kind:'warning', title:'Potential issue found', detail:`The entered ingredient matches: ${matches.map(m=>m.name).join(', ')}. This is a simulated duplicate-ingredient rule, not verified clinical evidence. Ask a qualified clinician to review.`})
+    else setResult({kind:'ok', title:'No known match found', detail:'No duplicate ingredient match was found in the limited demo data. This does not prove the combination is safe; drug interactions and allergies have not been comprehensively checked.'})
+  }
+  return <div className="space-y-6"><div><div className="flex items-center gap-3"><div className="rounded-xl bg-mint p-3 text-forest"><ShieldCheck size={24}/></div><div><h2 className="text-xl font-semibold">Medication Safety Shield</h2><p className="mt-1 text-sm text-muted">A clinician-facing review workflow, not an autonomous medical decision.</p></div></div></div>
+    <div className="grid gap-6 xl:grid-cols-[1fr_.8fr]"><section className="card"><SectionHeading title="Check proposed medication" subtitle="Compare an ingredient against active demo medicines."/><form onSubmit={check} className="space-y-4"><label className="form-label">Proposed medication<input className="field" value={name} onChange={e=>setName(e.target.value)} placeholder="Medication name" required/></label><label className="form-label">Active ingredient<input className="field" value={ingredient} onChange={e=>setIngredient(e.target.value)} placeholder="Enter verified ingredient" required/></label><button className="btn-primary" type="submit"><ShieldCheck size={17}/> Run demo check</button></form><div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4"><p className="text-sm font-semibold">Existing medicines checked</p><div className="mt-3 flex flex-wrap gap-2">{patient.medications.filter(m=>m.status==='Active').map(m=><span key={m.id} className="rounded-full bg-white px-3 py-1.5 text-xs text-slate-700 ring-1 ring-slate-200">{m.name}</span>)}</div></div></section>
+      <section className="card"><SectionHeading title="Check result" subtitle="Results remain subject to clinician review."/>{!result?<EmptyState title="No check performed" detail="Enter a proposed medicine to see the demo workflow."/>:<div className={`rounded-2xl border p-5 ${result.kind==='warning'?'border-amber-200 bg-amber-50':result.kind==='ok'?'border-emerald-200 bg-emerald-50':'border-slate-200 bg-slate-50'}`}><div className="flex items-center gap-2 font-semibold">{result.kind==='warning'?<AlertTriangle size={19}/>:result.kind==='ok'?<ShieldCheck size={19}/>:<Clock3 size={19}/>} {result.title}</div><p className="mt-3 text-sm leading-6">{result.detail}</p><div className="mt-4 border-t border-current/10 pt-3 text-xs leading-5 opacity-80">Source: local demo rule Â· Check time: {new Date().toLocaleString()} Â· Review status: Pending clinician review</div><label className="mt-4 flex items-start gap-2 text-sm"><input type="checkbox" className="mt-1 accent-forest"/><span>I have reviewed this demo result. This acknowledgement is not a clinical approval.</span></label></div>}</section></div>
+    <section className="card"><SectionHeading title="Recent safety history"/>{history.filter(h=>h.type.toLowerCase().includes('safety')).length===0?<EmptyState title="No recorded safety events" detail="Safety checks will be recorded here when connected to the backend."/>:history.filter(h=>h.type.toLowerCase().includes('safety')).map(h=><div key={h.id} className="border-t border-slate-100 py-3 first:border-0"><p className="font-medium">{h.detail}</p><p className="mt-1 text-xs text-muted">{h.time} Â· {h.actor}</p></div>)}</section>
+  </div>
+}
+
+export function Alerts() {
+  const { alerts, acknowledgeAlert } = useApp()
+  return <div className="space-y-5"><SectionHeading title="Alerts & notifications" subtitle="In-app demo alerts for medication and adherence events."/><div className="space-y-3">{alerts.map(a=><article key={a.id} className="card flex flex-wrap items-start gap-4"><div className="rounded-xl bg-amber-50 p-3 text-amber-700"><AlertTriangle size={20}/></div><div className="min-w-[180px] flex-1"><h3 className="font-semibold">{a.title}</h3><p className="mt-1 text-sm text-muted">{a.detail}</p><p className="mt-2 text-xs text-slate-400">{a.time}</p><p className="mt-2 text-xs text-muted">Alert lifecycle: Created â†’ Delivered â†’ Acknowledged â†’ Resolved</p></div><StatusBadge status={a.status}/>{a.status!=='Acknowledged'&&<button onClick={()=>acknowledgeAlert(a.id)} className="btn-small-primary">Acknowledge</button>}</article>)}</div></div>
+}
+
+export function History() {
+  const { history } = useApp()
+  return <div className="space-y-5"><SectionHeading title="Shared medication history" subtitle="Chronological record of dose events, prescriptions and reviews."/><div className="card"><div className="relative space-y-0">{history.map((h,i)=><div key={h.id} className="relative flex gap-4 pb-7 last:pb-0"><div className="relative flex flex-col items-center"><div className="z-10 rounded-full border-4 border-white bg-mint p-2 text-forest"><HistoryIcon size={15}/></div>{i!==history.length-1&&<div className="absolute top-8 h-full w-px bg-slate-200"/>}</div><div className="flex-1 pb-2"><div className="flex flex-wrap items-center justify-between gap-2"><p className="font-semibold">{h.type}</p><span className="text-xs text-muted">{h.time}</span></div><p className="mt-1 text-sm text-muted">{h.detail}</p><p className="mt-2 text-xs text-slate-400">Actor: {h.actor}</p></div></div>)}</div></div></div>
+}
+
+export function Patients() {
+  const { patient } = useApp()
+  return <div className="space-y-5"><SectionHeading title="Authorized patient records" subtitle="This demo includes one fictional patient. Real authorization must be enforced by the backend."/><div className="card"><div className="flex flex-wrap items-center gap-4"><div className="flex h-14 w-14 items-center justify-center rounded-full bg-mint font-semibold text-forest">AS</div><div className="flex-1"><h3 className="font-semibold">{patient.name}</h3><p className="mt-1 text-sm text-muted">Patient ID: DEMO-001 Â· Age {patient.age}</p><p className="mt-1 text-sm text-muted">Allergies: {patient.allergies.join(', ')}</p></div><span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700">Demo authorized</span></div><div className="mt-5 grid gap-3 sm:grid-cols-3">{patient.medications.filter(m=>m.status==='Active').map(m=><div key={m.id} className="rounded-xl border border-slate-100 p-3"><p className="font-semibold">{m.name}</p><p className="mt-1 text-sm text-muted">{m.strength}</p></div>)}</div></div></div>
+}
+
+export function Prescriptions() {
+  return <div className="card"><div className="flex items-center gap-3"><div className="rounded-xl bg-mint p-3 text-forest"><FileText size={20}/></div><div><h2 className="font-semibold">Prescription management</h2><p className="mt-1 text-sm text-muted">Use the Doctor dashboard to create or discontinue demo prescriptions.</p></div></div></div>
+}
+
+
+
+========== FILE: D:\ddrive\drug-coordination\medisync-frontend-starter\src\services\api.js ==========
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+
+export async function apiRequest(path, options = {}) {
+  if (!API_BASE_URL) {
+    throw new Error('Backend is not configured. Set VITE_API_BASE_URL in your .env file.')
+  }
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    }
+  })
+  const body = response.status === 204 ? null : await response.json().catch(() => null)
+  if (!response.ok) {
+    throw new Error(body?.message || `Request failed (${response.status})`)
+  }
+  return body
+}
+
