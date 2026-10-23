@@ -135,8 +135,164 @@ function CaregiverDashboard() {
   </div>
 }
 
+function PharmacyDashboard() {
+  const navigate = useNavigate()
+  const { patient, history } = useApp()
+
+  const activeMeds = patient.medications.filter(m => m.status === 'Active')
+
+  return (
+    <div className="space-y-7">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium text-forest">Pharmacy workspace</p>
+          <h2 className="mt-1 text-2xl font-semibold tracking-tight">
+            Refill coordination
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            Demo pharmacy · Simulated refill requests only
+          </p>
+        </div>
+        <button onClick={() => navigate('/refills')} className="btn-primary">
+          <Pill size={16} /> View refill requests
+        </button>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label="Active medication records"
+          value={activeMeds.length}
+          note="Demo patient only"
+          icon={Pill}
+        />
+        <StatCard
+          label="Refill requests"
+          value={(() => { try { return JSON.parse(localStorage.getItem('medisync-refill-network') || '[]').length } catch { return 0 } })()}
+          note="Demo requests in this browser"
+          icon={Activity}
+          tint="blue"
+        />
+        <StatCard
+          label="Demo pharmacies"
+          value="3"
+          note="Simulated listings only"
+          icon={CheckCircle2}
+        />
+        <StatCard
+          label="Recent shared events"
+          value={history.length}
+          note="Demo history"
+          icon={Clock3}
+        />
+      </div>
+
+      <section className="card">
+        <SectionHeading
+          title="Pharmacy features"
+          subtitle="Respond to patient-authorized demo refill requests."
+        />
+        <div className="grid gap-4 md:grid-cols-2">
+          <button onClick={() => navigate('/refills')} className="rounded-xl border border-slate-100 p-4 text-left transition hover:border-forest">
+            <Activity className="text-forest" size={22} />
+            <h3 className="mt-3 font-semibold">Smart refill requests</h3>
+            <p className="mt-2 text-sm text-muted">
+              Review patient-authorized refill requests and record Available, Unavailable, or Unable to Confirm.
+            </p>
+          </button>
+          <div className="rounded-xl border border-slate-100 p-4">
+            <CheckCircle2 className="text-forest" size={22} />
+            <h3 className="mt-3 font-semibold">Fulfilment tracking</h3>
+            <p className="mt-2 text-sm text-muted">
+              Patients can save a pickup or delivery preference after a demo Available response.
+            </p>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function AdminDashboard() {
+  const navigate = useNavigate()
+  const { history, alerts } = useApp()
+
+  return (
+    <div className="space-y-7">
+      <div>
+        <p className="text-sm font-medium text-forest">Administration workspace</p>
+        <h2 className="mt-1 text-2xl font-semibold tracking-tight">
+          MediSync system overview
+        </h2>
+        <p className="mt-2 text-sm text-muted">
+          Demo monitoring · No real provider accounts or patient data
+        </p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label="Provider applications"
+          value="0"
+          note="Verification workflow to be implemented"
+          icon={Users}
+        />
+        <StatCard
+          label="Open alerts"
+          value={alerts.filter(a => a.status !== 'Acknowledged').length}
+          note="Across demo data"
+          icon={TriangleAlert}
+          tint="amber"
+        />
+        <StatCard
+          label="Recorded events"
+          value={history.length}
+          note="Current demo history"
+          icon={Activity}
+          tint="blue"
+        />
+        <StatCard
+          label="Verification status"
+          value="Demo"
+          note="No real identity checks"
+          icon={CheckCircle2}
+        />
+      </div>
+
+      <section className="card">
+        <SectionHeading
+          title="Administration tools"
+          subtitle="Open an area to review the existing demo data."
+        />
+        <div className="grid gap-4 md:grid-cols-2">
+          <button
+            onClick={() => navigate('/history')}
+            className="rounded-xl border border-slate-100 p-4 text-left transition hover:border-forest"
+          >
+            <Activity className="text-forest" size={22} />
+            <h3 className="mt-3 font-semibold">Audit history</h3>
+            <p className="mt-2 text-sm text-muted">
+              Review the events currently recorded in the demo.
+            </p>
+          </button>
+          <button
+            onClick={() => navigate('/alerts')}
+            className="rounded-xl border border-slate-100 p-4 text-left transition hover:border-forest"
+          >
+            <TriangleAlert className="text-forest" size={22} />
+            <h3 className="mt-3 font-semibold">System alerts</h3>
+            <p className="mt-2 text-sm text-muted">
+              Review the current demo alert list.
+            </p>
+          </button>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 export default function Dashboard({ role }) {
-  if (role === 'doctor') return <DoctorDashboard/>
-  if (role === 'caregiver') return <CaregiverDashboard/>
-  return <PatientDashboard/>
+  if (role === 'doctor') return <DoctorDashboard />
+  if (role === 'caregiver') return <CaregiverDashboard />
+  if (role === 'pharmacy') return <PharmacyDashboard />
+  if (role === 'admin') return <AdminDashboard />
+  return <PatientDashboard />
 }

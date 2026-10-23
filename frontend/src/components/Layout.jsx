@@ -5,8 +5,9 @@ import { useApp } from '../context/AppContext'
 
 const navByRole = {
   patient: [
-    ['Dashboard', '/', LayoutDashboard], ['Medications', '/medications', Pill], ['Dose schedule', '/schedule', CalendarClock],
-    ['Find medicines', '/pharmacies', MapPin], ['Safety center', '/safety', ShieldCheck], ['Alerts', '/alerts', Bell], ['History', '/history', History]
+    ['Dashboard', '/', LayoutDashboard], ['Medications', '/medications', Pill], ['Refills', '/refills', FileText],
+    ['Dose schedule', '/schedule', CalendarClock], ['Find medicines', '/pharmacies', MapPin], ['Safety center', '/safety', ShieldCheck],
+    ['Alerts', '/alerts', Bell], ['History', '/history', History]
   ],
   doctor: [
     ['Dashboard', '/', LayoutDashboard], ['Patients', '/patients', Users], ['Prescriptions', '/prescriptions', FileText],
@@ -14,14 +15,24 @@ const navByRole = {
   ],
   caregiver: [
     ['Dashboard', '/', LayoutDashboard], ['Patients', '/patients', Users], ['Find medicines', '/pharmacies', MapPin], ['Alerts', '/alerts', Bell], ['History', '/history', History]
-  ]
+  ],
+  pharmacy: [
+    ['Dashboard', '/', LayoutDashboard],
+    ['Refill Requests', '/refills', FileText],
+    ['History', '/history', History]
+  ],
+  admin: [
+    ['Dashboard', '/', LayoutDashboard],
+    ['Audit history', '/history', History]
+  ],
 }
 const titles = {
   '/': 'Dashboard', '/medications': 'Medications', '/schedule': 'Dose schedule', '/safety': 'Medication Safety Shield',
   '/alerts': 'Alerts & notifications', '/history': 'Shared medication history', '/patients': 'Patient records',
-  '/prescriptions': 'Prescriptions', '/pharmacies': 'Find medicines nearby'
+  '/prescriptions': 'Prescriptions', '/pharmacies': 'Find medicines nearby', '/refills': 'Smart Refill Network',
 }
-const userName = { doctor: 'Dr. Meera Rao', caregiver: 'Ananya Sharma', patient: 'Aarav Sharma' }
+const userName = { doctor: 'Dr. Meera Rao', caregiver: 'Ananya Sharma', patient: 'Aarav Sharma' ,pharmacy: 'Demo Pharmacy',
+  admin: 'MediSync Administrator'}
 
 export default function Layout({ role, onExit, children }) {
   const [open, setOpen] = useState(false)
@@ -30,8 +41,19 @@ export default function Layout({ role, onExit, children }) {
   const { alerts, resetDemo } = useApp()
   const unread = alerts.filter(a => a.status !== 'Acknowledged').length
   const nav = navByRole[role] || navByRole.patient
-  const roleName = role.charAt(0).toUpperCase() + role.slice(1)
-  const reset = () => { if (window.confirm('Reset all demo data to its starting state?')) { resetDemo(); navigate('/') } }
+  const roleName = role === 'caregiver'
+  ? 'Caretaker'
+  : role === 'admin'
+    ? 'Administrator'
+    : role === 'pharmacy'
+      ? 'Pharmacy'
+      : role.charAt(0).toUpperCase() + role.slice(1)
+  const reset = () => {
+    if (!window.confirm('Reset all demo data to its starting state?')) return
+    resetDemo()
+    try { localStorage.removeItem('medisync-refill-network') } catch { /* ignore */ }
+    navigate('/')
+  }
   return <div className="min-h-screen bg-canvas text-ink">
     {open && <button aria-label="Close navigation" className="fixed inset-0 z-30 bg-slate-900/30 md:hidden" onClick={() => setOpen(false)} />}
     <aside className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col overflow-y-auto border-r border-slate-100 bg-white px-4 py-5 transition-transform md:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}>

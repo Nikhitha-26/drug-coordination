@@ -1,13 +1,14 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { AppProvider } from '../context/AppContext'
 import Layout from '../components/Layout'
 import Login from '../pages/Login'
 import Dashboard from '../pages/Dashboard'
+import { Refills } from '../pages/WorkflowPages'
 import { Alerts, History, Medications, Patients, Pharmacies, Prescriptions, SafetyCenter, Schedule } from '../pages/Pages'
 
 const ROLE_KEY = 'medisync-role'
-const VALID_ROLES = ['patient', 'doctor', 'caregiver']
+const VALID_ROLES = ['patient', 'doctor', 'caregiver', 'pharmacy', 'admin']
 
 function readRole() {
   try {
@@ -33,7 +34,7 @@ function RoutedApp() {
     navigate('/login')
   }
 
-  if (!role) return <Routes><Route path="/login" element={<Login onSelect={selectRole}/>} /><Route path="*" element={<Navigate to="/login" replace/>}/></Routes>
+  if (!role) return <Routes><Route path="/login" element={<Login onSelect={selectRole} />} /><Route path="*" element={<Navigate to="/login" replace />} /></Routes>
 
   const only = (allowed, element) => allowed.includes(role) ? element : <Navigate to="/" replace/>
   return <Routes>
@@ -48,6 +49,7 @@ function RoutedApp() {
       <Route path="/history" element={<History/>}/>
       <Route path="/patients" element={only(['doctor', 'caregiver'], <Patients/>)}/>
       <Route path="/prescriptions" element={only(['doctor'], <Prescriptions/>)}/>
+      <Route path="/refills" element={only(['patient', 'pharmacy'], <Refills role={role}/>)}/>
       <Route path="*" element={<Navigate to="/" replace/>}/>
     </Routes></Layout>} />
   </Routes>
@@ -56,3 +58,6 @@ function RoutedApp() {
 export default function App() {
   return <AppProvider><RoutedApp/></AppProvider>
 }
+
+
+
