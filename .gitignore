@@ -1,0 +1,24 @@
+# macOS files
+.DS_Store
+
+# AWS SAM generated build files
+backend/.aws-sam/
+
+# Python caches
+__pycache__/
+.pytest_cache/
+*.py[cod]
+
+# Virtual environments
+backend/.venv/
+backend/.venv-1/
+backend/venv/
+
+# Local secrets
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Frontend generated files
+frontend/node_modules/
+frontend/dist/
