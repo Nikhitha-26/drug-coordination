@@ -1,7 +1,7 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+﻿import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { demoPatient, demoAlerts, demoHistory } from '../data/demo'
 
-const AppContext = createContext(null)
+export const AppContext = createContext(null)
 const STORAGE_KEY = 'medisync-demo-state-v2'
 
 const makeInitialState = () => ({
@@ -40,7 +40,7 @@ export function AppProvider({ children }) {
       const dose = prev.patient.doses.find(d => d.id === doseId)
       if (!dose) return prev
       const alerts = status === 'missed'
-        ? [{ id: uid('alert'), title: 'Missed dose', detail: `${dose.medicine} · scheduled for ${dose.time}`, time: new Date().toLocaleString(), status: 'Created', severity: 'warning' }, ...prev.alerts]
+        ? [{ id: uid('alert'), title: 'Missed dose', detail: `${dose.medicine} Â· scheduled for ${dose.time}`, time: new Date().toLocaleString(), status: 'Created', severity: 'warning' }, ...prev.alerts]
         : prev.alerts
       return {
         ...prev,
@@ -101,7 +101,7 @@ export function AppProvider({ children }) {
           medications: swap(prev.patient.medications),
           doses: prev.patient.doses.map(d => d.medicationId === id && d.status === 'pending' ? { ...d, medicine: after.name, dose: after.strength, time: after.time } : d)
         },
-        history: [entry('Prescription updated', `${before.name} ${before.strength}, ${before.frequency} → ${after.name} ${after.strength}, ${after.frequency}`, 'Dr. Meera Rao'), ...prev.history]
+        history: [entry('Prescription updated', `${before.name} ${before.strength}, ${before.frequency} â†’ ${after.name} ${after.strength}, ${after.frequency}`, 'Dr. Meera Rao'), ...prev.history]
       }
     })
 
@@ -131,7 +131,7 @@ export function AppProvider({ children }) {
     return { markDose, acknowledgeAlert, createPrescription, modifyPrescription, discontinuePrescription, recordSafetyCheck, resetDemo }
   }, [])
 
-  const value = useMemo(() => ({ ...state, ...actions }), [state, actions])
+  const value = useMemo(() => ({ ...state, ...actions, user: { role: sessionStorage.getItem('medisync-role') || 'patient' } }), [state, actions])
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }
 
