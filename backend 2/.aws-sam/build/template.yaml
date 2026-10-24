@@ -1,0 +1,318 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: MediLink patient medication management API starter
+Parameters:
+  CognitoUserPoolId:
+    Type: String
+    Description: Existing Cognito User Pool ID in the same AWS region
+  CognitoAppClientId:
+    Type: String
+    Description: Cognito app client ID used by the frontend
+  CorsOrigin:
+    Type: String
+    Default: http://localhost:3000
+    Description: Exact frontend origin; change before deployment
+Globals:
+  Function:
+    Runtime: python3.13
+    Handler: app.handler
+    CodeUri: src/
+    Timeout: 20
+    MemorySize: 256
+    Environment:
+      Variables:
+        PATIENTS_TABLE:
+          Ref: PatientsTable
+        MEDICATIONS_TABLE:
+          Ref: MedicationsTable
+        DOSE_EVENTS_TABLE:
+          Ref: DoseEventsTable
+        AUDIT_EVENTS_TABLE:
+          Ref: AuditEventsTable
+        DOCUMENTS_TABLE:
+          Ref: DocumentsTable
+        DOCTOR_ACCESS_TABLE:
+          Ref: DoctorAccessTable
+        DOCUMENTS_BUCKET:
+          Ref: DocumentsBucket
+        CORS_ORIGIN:
+          Ref: CorsOrigin
+        ALERT_TOPIC_ARN:
+          Ref: MissedDoseAlertsTopic
+Resources:
+  MissedDoseAlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName:
+        Fn::Sub: ${AWS::StackName}-missed-dose-alerts
+  Api:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+        - Ref: CorsOrigin
+        AllowHeaders:
+        - authorization
+        - content-type
+        AllowMethods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+      Auth:
+        Authorizers:
+          CognitoAuthorizer:
+            IdentitySource: $request.header.Authorization
+            JwtConfiguration:
+              issuer:
+                Fn::Sub: https://cognito-idp.${AWS::Region}.amazonaws.com/${CognitoUserPoolId}
+              audience:
+              - Ref: CognitoAppClientId
+        DefaultAuthorizer: CognitoAuthorizer
+  Backend:
+    Type: AWS::Serverless::Function
+    Properties:
+      Events:
+        Health:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: Api
+            Path: /health
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuthorizer
+        Profile:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: Api
+            Path: /patients/{patientId}/profile
+            Method: ANY
+        Medications:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: Api
+            Path: /patients/{patientId}/medications
+            Method: ANY
+        Medication:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: Api
+            Path: /patients/{patientId}/medications/{medicationId}
+            Method: ANY
+        Doses:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: Api
+            Path: /patients/{patientId}/doses
+            Method: ANY
+        Audit:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: Api
+            Path: /patients/{patientId}/audit
+            Method: GET
+        DoctorAccess:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: Api
+            Path: /patients/{patientId}/doctor-access
+            Method: ANY
+        DocumentUploadUrl:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: Api
+            Path: /patients/{patientId}/documents/upload-url
+            Method: POST
+        Documents:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: Api
+            Path: /patients/{patientId}/documents
+            Method: GET
+        Document:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: Api
+            Path: /patients/{patientId}/documents/{documentId}
+            Method: GET
+        InteractionCheck:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: Api
+            Path: /patients/{patientId}/interaction-check
+            Method: POST
+        RefillStatus:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: Api
+            Path: /patients/{patientId}/refill-status
+            Method: GET
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: PatientsTable
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: MedicationsTable
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: DoseEventsTable
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: AuditEventsTable
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: DocumentsTable
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: DoctorAccessTable
+      - S3CrudPolicy:
+          BucketName:
+            Ref: DocumentsBucket
+      - SNSPublishMessagePolicy:
+          TopicName:
+            Fn::GetAtt:
+            - MissedDoseAlertsTopic
+            - TopicName
+      CodeUri: Backend
+    Metadata:
+      SamResourceId: Backend
+  PatientsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      SSESpecification:
+        SSEEnabled: true
+      AttributeDefinitions:
+      - AttributeName: patientId
+        AttributeType: S
+      KeySchema:
+      - AttributeName: patientId
+        KeyType: HASH
+  MedicationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      SSESpecification:
+        SSEEnabled: true
+      AttributeDefinitions:
+      - AttributeName: patientId
+        AttributeType: S
+      - AttributeName: medicationId
+        AttributeType: S
+      KeySchema:
+      - AttributeName: patientId
+        KeyType: HASH
+      - AttributeName: medicationId
+        KeyType: RANGE
+  DoseEventsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      SSESpecification:
+        SSEEnabled: true
+      AttributeDefinitions:
+      - AttributeName: patientId
+        AttributeType: S
+      - AttributeName: doseEventId
+        AttributeType: S
+      KeySchema:
+      - AttributeName: patientId
+        KeyType: HASH
+      - AttributeName: doseEventId
+        KeyType: RANGE
+  AuditEventsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      SSESpecification:
+        SSEEnabled: true
+      AttributeDefinitions:
+      - AttributeName: patientId
+        AttributeType: S
+      - AttributeName: timestamp
+        AttributeType: S
+      KeySchema:
+      - AttributeName: patientId
+        KeyType: HASH
+      - AttributeName: timestamp
+        KeyType: RANGE
+  DocumentsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      SSESpecification:
+        SSEEnabled: true
+      AttributeDefinitions:
+      - AttributeName: patientId
+        AttributeType: S
+      - AttributeName: documentId
+        AttributeType: S
+      KeySchema:
+      - AttributeName: patientId
+        KeyType: HASH
+      - AttributeName: documentId
+        KeyType: RANGE
+  DoctorAccessTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      SSESpecification:
+        SSEEnabled: true
+      AttributeDefinitions:
+      - AttributeName: doctorId
+        AttributeType: S
+      - AttributeName: patientId
+        AttributeType: S
+      KeySchema:
+      - AttributeName: doctorId
+        KeyType: HASH
+      - AttributeName: patientId
+        KeyType: RANGE
+      GlobalSecondaryIndexes:
+      - IndexName: PatientAccessIndex
+        KeySchema:
+        - AttributeName: patientId
+          KeyType: HASH
+        - AttributeName: doctorId
+          KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
+  DocumentsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+Outputs:
+  ApiBaseUrl:
+    Description: API Gateway HTTP API base URL
+    Value:
+      Fn::Sub: https://${Api}.execute-api.${AWS::Region}.amazonaws.com
+  DocumentsBucketName:
+    Value:
+      Ref: DocumentsBucket
+  PatientsTableName:
+    Value:
+      Ref: PatientsTable

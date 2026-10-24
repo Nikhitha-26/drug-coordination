@@ -29,10 +29,18 @@ Globals:
         AUDIT_EVENTS_TABLE: !Ref AuditEventsTable
         DOCUMENTS_TABLE: !Ref DocumentsTable
         DOCTOR_ACCESS_TABLE: !Ref DoctorAccessTable
+        DOCTOR_CODES_TABLE: !Ref DoctorCodesTable
         DOCUMENTS_BUCKET: !Ref DocumentsBucket
         CORS_ORIGIN: !Ref CorsOrigin
+        ALERT_TOPIC_ARN: !Ref MissedDoseAlertsTopic
 
 Resources:
+
+  MissedDoseAlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "${AWS::StackName}-missed-dose-alerts"
+
   Api:
     Type: AWS::Serverless::HttpApi
     Properties:
@@ -99,6 +107,12 @@ Resources:
             ApiId: !Ref Api
             Path: /patients/{patientId}/doctor-access
             Method: ANY
+        DoctorCode:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref Api
+            Path: /doctor-code
+            Method: GET
         DocumentUploadUrl:
           Type: HttpApi
           Properties:
@@ -142,8 +156,12 @@ Resources:
             TableName: !Ref DocumentsTable
         - DynamoDBCrudPolicy:
             TableName: !Ref DoctorAccessTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DoctorCodesTable
         - S3CrudPolicy:
             BucketName: !Ref DocumentsBucket
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt MissedDoseAlertsTopic.TopicName
 
   PatientsTable:
     Type: AWS::DynamoDB::Table
@@ -249,6 +267,28 @@ Resources:
               KeyType: HASH
             - AttributeName: doctorId
               KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+  DoctorCodesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      SSESpecification:
+        SSEEnabled: true
+      AttributeDefinitions:
+        - AttributeName: doctorId
+          AttributeType: S
+        - AttributeName: doctorCode
+          AttributeType: S
+      KeySchema:
+        - AttributeName: doctorId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: DoctorCodeIndex
+          KeySchema:
+            - AttributeName: doctorCode
+              KeyType: HASH
           Projection:
             ProjectionType: ALL
 

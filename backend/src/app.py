@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import uuid
+import secrets
 from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 import boto3
@@ -21,9 +22,11 @@ TABLES = {
     "audit": os.getenv("AUDIT_EVENTS_TABLE", "AuditEvents"),
     "documents": os.getenv("DOCUMENTS_TABLE", "Documents"),
     "doctor_access": os.getenv("DOCTOR_ACCESS_TABLE", "DoctorAccess"),
+    "doctor_codes": os.getenv("DOCTOR_CODES_TABLE", "DoctorCodes"),
 }
 UPLOAD_BUCKET = os.getenv("DOCUMENTS_BUCKET", "")
 ALERT_TOPIC_ARN = os.getenv("ALERT_TOPIC_ARN", "")
+sns = boto3.client("sns")
 
 def _json_default(value):
     if isinstance(value, Decimal):
@@ -129,6 +132,45 @@ def handler(event, context):
             return response(204, {})
         actor = caller(event)
         params = path_params(event)
+
+        # A doctor can retrieve their own share code without already having access to a patient.
+        if path.rstrip("/") == "/doctor-code" and method == "GET":
+            if actor.get("role") != "doctor":
+                return response(403, {"error": "Only doctor accounts can access a doctor code"})
+            codes_table = table("doctor_codes")
+            existing = codes_table.get_item(Key={"doctorId": actor["id"]}).get("Item")
+            if existing:
+                return response(200, {"doctorCode": existing["doctorCode"], "createdAt": existing.get("createdAt")})
+            # Use a short, human-readable code. Check the GSI before saving to reduce collision risk.
+            alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+            for _ in range(8):
+                code = "DR-" + "".join(secrets.choice(alphabet) for _ in range(6))
+                matches = codes_table.query(
+                    IndexName="DoctorCodeIndex",
+                    KeyConditionExpression=Key("doctorCode").eq(code),
+                    Limit=1,
+                ).get("Items", [])
+                if matches:
+                    continue
+                item = {
+                    "doctorId": actor["id"],
+                    "doctorCode": code,
+                    "doctorName": (event.get("requestContext", {}).get("authorizer", {}).get("jwt", {}).get("claims", {}).get("name") or "Doctor")[:120],
+                    "doctorEmail": actor.get("email", "")[:254],
+                    "createdAt": now(),
+                    "status": "active",
+                }
+                try:
+                    codes_table.put_item(Item=item, ConditionExpression="attribute_not_exists(doctorId)")
+                    return response(201, {"doctorCode": code, "createdAt": item["createdAt"]})
+                except ClientError as exc:
+                    if exc.response.get("Error", {}).get("Code") == "ConditionalCheckFailedException":
+                        existing = codes_table.get_item(Key={"doctorId": actor["id"]}).get("Item")
+                        if existing:
+                            return response(200, {"doctorCode": existing["doctorCode"], "createdAt": existing.get("createdAt")})
+                    raise
+            return response(503, {"error": "Could not generate a unique doctor code. Please retry."})
+
         patient_id = params.get("patientId") or actor["id"]
         require_patient_access(patient_id, actor, write=method in ("POST", "PUT", "DELETE"))
 
@@ -269,7 +311,18 @@ def handler(event, context):
                 )
             audit(patient_id, actor, "dose." + status, "dose", event_id, {"medicationId": med_id})
             return response(201, {"doseEvent": item})
-
+            if status == "missed" and ALERT_TOPIC_ARN:
+                try:
+                    sns.publish(
+                        TopicArn=ALERT_TOPIC_ARN,
+                        Subject="MediLink: Missed Dose Alert",
+                        Message=(
+                            "A medication dose has been marked as missed. "
+                            f"Medication: {med.get('name', 'Unknown medication')}. "
+                            f"Recorded at: {item['recordedAt']}."
+                            ),)
+                except Exception:
+                    logger.exception("Missed-dose notification failed")
         if path.endswith("/audit") and method == "GET":
             items = table("audit").query(KeyConditionExpression=Key("patientId").eq(patient_id), ScanIndexForward=False, Limit=100).get("Items", [])
             return response(200, {"items": items})
@@ -280,8 +333,23 @@ def handler(event, context):
                 return response(403, {"error": "Only the patient can grant doctor access"})
             data = body_json(event)
             doctor_id = data.get("doctorId")
+            doctor_code = data.get("doctorCode")
+            doctor_details = None
+            if doctor_code:
+                normalized_code = required_text({"doctorCode": doctor_code}, "doctorCode", 16).upper()
+                matches = table("doctor_codes").query(
+                    IndexName="DoctorCodeIndex",
+                    KeyConditionExpression=Key("doctorCode").eq(normalized_code),
+                    Limit=1,
+                ).get("Items", [])
+                doctor_details = matches[0] if matches else None
+                if not doctor_details or doctor_details.get("status") != "active":
+                    return response(404, {"error": "Doctor code was not found or is inactive"})
+                doctor_id = doctor_details["doctorId"]
             if not doctor_id:
-                return response(400, {"error": "doctorId is required"})
+                return response(400, {"error": "doctorCode is required"})
+            if doctor_id == actor["id"]:
+                return response(400, {"error": "You cannot add yourself as your doctor"})
             can_write = data.get("canWrite", False)
             if not isinstance(can_write, bool):
                 raise ValueError("canWrite must be true or false")
@@ -292,6 +360,8 @@ def handler(event, context):
                 "canWrite": can_write,
                 "createdAt": now(),
                 "grantedBy": actor["id"],
+                "doctorName": (doctor_details or {}).get("doctorName", ""),
+                "doctorEmail": (doctor_details or {}).get("doctorEmail", ""),
             }
             table("doctor_access").put_item(Item=item)
             audit(patient_id, actor, "doctor.access_granted", "doctor", str(doctor_id))
